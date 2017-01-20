@@ -23,6 +23,7 @@ in https://wiki.openstack.org/wiki/APIChangeGuidelines.
 
 from openstack_dashboard.api.rest import cinder
 from openstack_dashboard.api.rest import config
+from openstack_dashboard.api.rest import docpages
 from openstack_dashboard.api.rest import glance
 from openstack_dashboard.api.rest import heat
 from openstack_dashboard.api.rest import keystone
@@ -36,6 +37,7 @@ from openstack_dashboard.api.rest import swift
 __all__ = [
     'cinder',
     'config',
+    'docpages',
     'glance',
     'heat',
     'keystone',
