@@ -1,0 +1,26 @@
+<div class="form-group hz-textarea has-feedback {$::form.htmlClass$}"
+     sf-field
+     ng-class="{'has-error': form.disableErrorState !== true && hasError(), 'has-success': form.disableSuccessState !== true &&  hasSuccess()}">
+  <label class="control-label {$::form.labelHtmlClass$}"
+         ng-class="{'sr-only': !showTitle()}"
+         for="{$::form.key.slice(-1)[0]$}">
+    <span>{$::form.title$}</span>
+    <span ng-if="form.required" class="hz-icon-required fa fa-asterisk"></span>
+    <span class="btn btn-default btn-xs" ng-click="preview = !preview">
+      <translate>Preview</translate>
+    </span>
+  </label>
+
+  <textarea class="form-control markdown {$::form.fieldHtmlClass$}"
+            ng-if="!preview"
+            id="{$::form.key.slice(-1)[0]$}"
+            sf-changed="form"
+            placeholder="{$::form.placeholder$}"
+            ng-disabled="form.readonly"
+            sf-field-model
+            schema-validate="form"
+            name="{$::form.key.slice(-1)[0]$}"></textarea>
+  <div ng-if="preview" sf-field-model="markdown-to-html"></div>
+
+  <span class="help-block" sf-message="form.description"></span>
+</div>

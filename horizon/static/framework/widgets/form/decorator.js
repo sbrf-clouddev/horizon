@@ -53,6 +53,10 @@
         template: base + 'textarea.html',
         builder: defaults
       },
+      markdown: {
+        template: base + 'markdown.html',
+        builder: defaults
+      },
       fieldset: {
         template: base + 'fieldset.html',
         builder: [sfField, simpleTransclusion, condition]

@@ -28,6 +28,7 @@
     'ngSanitize',
     'schemaForm',
     'smart-table',
+    'ng-showdown',
     'ui.bootstrap'
   ];
 
