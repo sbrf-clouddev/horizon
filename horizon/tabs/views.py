@@ -15,10 +15,11 @@ from django import http
 from horizon import exceptions
 from horizon import tables
 from horizon.tabs.base import TableTab
+from horizon.utils import doc_pages
 from horizon import views
 
 
-class TabView(views.HorizonTemplateView):
+class TabView(doc_pages.DocViewMixin, views.HorizonTemplateView):
     """A generic view for displaying a :class:`horizon.tabs.TabGroup`.
 
     This view handles selecting specific tabs and deals with AJAX requests

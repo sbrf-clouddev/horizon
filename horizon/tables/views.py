@@ -16,9 +16,9 @@ from collections import defaultdict
 
 from django import shortcuts
 
-from horizon import views
-
 from horizon.templatetags.horizon import has_permissions
+from horizon.utils import doc_pages
+from horizon import views
 
 
 class MultiTableMixin(object):
@@ -231,7 +231,7 @@ class MultiTableView(MultiTableMixin, views.HorizonTemplateView):
         return self.get(request, *args, **kwargs)
 
 
-class DataTableView(MultiTableView):
+class DataTableView(doc_pages.DocViewMixin, MultiTableView):
     """A class-based generic view to handle basic DataTable processing.
 
     Three steps are required to use this view: set the ``table_class``
