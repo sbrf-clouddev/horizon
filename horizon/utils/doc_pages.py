@@ -30,13 +30,23 @@ class DocViewMixin(object):
         setattr(view, DOC_ATTR, True)
         return view
 
+    def get_context_data(self, **kwargs):
+        context = super(DocViewMixin, self).get_context_data(**kwargs)
+        context['docpage'] = get_docpage_for_view(
+            getattr(self.request.resolver_match, 'view_name', None)
+        )
+        return context
+
 
 def _deduce_urlname_to_viewfunc(reverse_dict):
-    """The reverse_dict structure contains 2 types of mappings:
+    """Deduce urlname to viewfunc utility.
+
+    The reverse_dict structure contains 2 types of mappings:
+
     1) named url mapping to url pattern and
     2) view function mapping to url pattern.
 
-    We need to derive third mapping: named url to a view function
+    We need to derive third mapping: named url to a view function.
     """
     name_patterns, func_patterns, name_funcs = {}, {}, {}
     for key, value in reverse_dict.items():
@@ -87,6 +97,8 @@ def enumerate_table_view_urls(root_urls_obj=horizon.urls[0]):
     return urls
 
 
-def get_doc_page_url_for_fixed_url(url):
-    pages = models.DocPage.objects.filter(url=url)
-    return pages[0].name if pages else None
+def get_docpage_for_view(view):
+    if view:
+        view = '/'.join(view.split(':')[1:])
+        return models.DocPage.objects.filter(linked_view=view).first()
+    return None

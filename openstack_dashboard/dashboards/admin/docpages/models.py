@@ -17,6 +17,8 @@ from django.db import models
 
 
 class DocPage(models.Model):
-    name = models.CharField(max_length=100, unique=True)
-    content = models.TextField()
-    url = models.CharField(max_length=256, blank=True)
+    url = models.CharField(max_length=100, blank=False, unique=True)
+    name = models.CharField(max_length=100, blank=False)
+    content = models.TextField(blank=False)
+    linked_view = models.CharField(max_length=100, blank=True,
+                                   null=True, unique=True)

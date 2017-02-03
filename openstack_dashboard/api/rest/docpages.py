@@ -31,7 +31,10 @@ class Urls(generic.View):
     def get(self, request):
         from openstack_dashboard import urls as app_urls
         avail_urls = doc_pages.enumerate_table_view_urls(app_urls.urlpatterns)
-        return {'items': [':'.join(url_pieces) for url_pieces in avail_urls]}
+        all_views = ['/'.join(url_pieces[1:]) for url_pieces in avail_urls]
+        linked_views = models.DocPage.objects.exclude(linked_view='')
+        linked_views = set(linked_views.values_list('linked_view', flat=True))
+        return {'items': [v for v in all_views if v not in linked_views]}
 
 
 @urls.register
@@ -45,22 +48,22 @@ class DocPages(generic.View):
         Creates a docpage using the parameters supplied in the POST
         application/json object. The parameters are:
 
-        :param name: the page name (permalink)
+        :param url: the page permalink
+        :param name: the page name
         :param content: the content of the page
-        :param url: the url the page should be attached to (optional)
+        :param linked_view: the view this page is attached to (optional)
 
         This returns the new page object on success.
         """
         fields = {
+            'url': request.DATA['url'],
             'name': request.DATA['name'],
-            'content': request.DATA['content']
+            'content': request.DATA['content'],
+            'linked_view': request.DATA.get('linked_view', None)
         }
-        if 'url' in request.DATA:
-            fields['url'] = request.DATA['url']
-        page = models.DocPage(**fields)
-        page.save()
+        page = models.DocPage.objects.create(**fields)
         return rest_utils.CreatedResponse(
-            '/api/docpages/%s' % utils_http.urlquote(page.id),
+            '/api/docpages/%s/' % utils_http.urlquote(page.id),
             django_models.model_to_dict(page)
         )
 
@@ -78,8 +81,8 @@ class DocPage(generic.View):
     @rest_utils.ajax(data_required=True)
     def patch(self, request, page_id):
         fields = {
-            'content': request.DATA['content']
+            'name': request.DATA['name'],
+            'content': request.DATA['content'],
+            'linked_view': request.DATA.get('linked_view', None)
         }
-        if 'url' in request.DATA:
-            fields['url'] = request.DATA['url']
-        models.DocPage.objects.filter(id=page_id).update(**fields)
+        models.DocPage.objects.filter(pk=page_id).update(**fields)

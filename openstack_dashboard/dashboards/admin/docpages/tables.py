@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from django.utils.http import urlquote
 from django.utils.translation import ugettext_lazy as _
 from django.utils.translation import ungettext_lazy
 
@@ -39,17 +40,17 @@ class DeletePage(tables.DeleteAction):
         )
 
     def delete(self, request, obj_id):
-        models.DocPage.objects.get(id=obj_id).delete()
+        models.DocPage.objects.filter(pk=obj_id).delete()
 
 
 class CreatePage(tables.LinkAction):
     name = "create"
     verbose_name = _("Create Page")
     icon = "plus"
-    attrs = {"ng-controller": "CreateDocPageController as modal"}
+    attrs = {"ng-controller": "CreateDocPageController as modal",
+             "ng-click": "modal.createPage()"}
 
     def get_link_url(self, datum=None):
-        self.attrs["ng-click"] = "modal.createPage()"
         return "javascript:void(0);"
 
 
@@ -65,6 +66,16 @@ class UpdatePage(tables.LinkAction):
         return "javascript:void(0);"
 
 
+class ViewPage(tables.LinkAction):
+    name = "view"
+    verbose_name = _("View Page")
+    icon = "eye"
+    attrs = {"target": "_blank"}
+
+    def get_link_url(self, datum=None):
+        return urlquote(datum.url) + "/"
+
+
 class PageFilterAction(tables.FilterAction):
     def filter(self, table, pages, filter_string):
         """Really naive case-insensitive search."""
@@ -77,11 +88,12 @@ class PageFilterAction(tables.FilterAction):
 
 
 class DocPagesTable(tables.DataTable):
+    url = tables.Column('url', verbose_name=_('Page URL'))
     name = tables.Column('name', verbose_name=_('Page Name'))
-    url = tables.Column('url', verbose_name=_('Linked to'))
+    linked_view = tables.Column('linked_view', verbose_name=_('Linked to'))
 
     class Meta(object):
         name = "docpages"
         verbose_name = _("Doc Pages")
         table_actions = (PageFilterAction, CreatePage, DeletePage)
-        row_actions = (UpdatePage, DeletePage)
+        row_actions = (ViewPage, UpdatePage, DeletePage)

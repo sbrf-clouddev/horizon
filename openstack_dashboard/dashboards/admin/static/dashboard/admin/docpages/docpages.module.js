@@ -18,6 +18,17 @@
   'use strict';
 
   angular
-    .module('horizon.dashboard.admin.docpages', []);
+    .module('horizon.dashboard.admin.docpages', [])
+    .config(Config);
+
+  Config.$inject = [
+    '$showdownProvider'
+  ];
+
+  function Config($showdownProvider) {
+    $showdownProvider.setOption('parseImgDimensions', true);
+    $showdownProvider.setOption('strikethrough', true);
+    $showdownProvider.setOption('tables', true);
+  }
 
 })();

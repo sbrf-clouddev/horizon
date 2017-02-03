@@ -6,12 +6,15 @@
          for="{$::form.key.slice(-1)[0]$}">
     <span>{$::form.title$}</span>
     <span ng-if="form.required" class="hz-icon-required fa fa-asterisk"></span>
-    <span class="btn btn-default btn-xs"
-          data-toggle="button"
-          ng-click="preview = !preview">
+    <button class="btn btn-default btn-xs"
+            data-toggle="button"
+            type="button"
+            sf-field-model="replaceAll"
+            ng-disabled="!$$value$$"
+            ng-click="preview = !preview">
       <span class="fa fa-eye" aria-hidden="true"></span>
       <translate>Preview</translate>
-    </span>
+    </button>
   </label>
 
   <textarea class="form-control markdown {$::form.fieldHtmlClass$}"

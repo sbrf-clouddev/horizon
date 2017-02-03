@@ -4,6 +4,10 @@
   var formSchema = {
     'type': 'object',
     'properties': {
+      'url': {
+        'title': gettext('URL'),
+        'type': 'string'
+      },
       'name': {
         'title': gettext('Name'),
         'type': 'string'
@@ -12,12 +16,12 @@
         'title': gettext('Content'),
         'type': 'string'
       },
-      'url': {
+      'linked_view': {
         'title': gettext('Linked to'),
         'type': 'string'
       }
     },
-    'required': ['name', 'content']
+    'required': ['url', 'name', 'content']
   };
 
   angular
@@ -25,7 +29,7 @@
     .service('horizon.dashboard.admin.docpages.create-page.service', createPage)
     .service('horizon.dashboard.admin.docpages.update-page.service', updatePage);
 
-  function getFormSpec(apiService, isUpdate) {
+  function getFormSpec(apiService, auxUrl) {
     return apiService.get('/api/docpages/urls/')
                      .then(function(data) {
                        var urls = $.map(data.data.items, function(item) {
@@ -34,14 +38,18 @@
                                name: item
                              };
                            });
-                       urls.unshift({'value': '', 'name': gettext('None')});
+                       if (auxUrl) {
+                         urls.unshift({value: auxUrl, name: auxUrl});
+                       }
+                       urls.unshift({value: '', 'name': gettext('None')});
                        return [
                          {
-                           'key': 'name',
-                           'readonly': isUpdate
-                         },
-                         {
                            'key': 'url',
+                           'readonly': !!auxUrl
+                         },
+                         'name',
+                         {
+                           'key': 'linked_view',
                            'type': 'select',
                            'titleMap': urls
                          },
@@ -54,6 +62,7 @@
   }
 
   createPage.$inject = [
+    '$q',
     'horizon.framework.widgets.form.ModalFormService',
     'horizon.framework.util.http.service',
     'horizon.framework.widgets.toast.service'
@@ -65,7 +74,7 @@
     'horizon.framework.widgets.toast.service'
   ];
 
-  function createPage(modalFormService, apiService, toastService) {
+  function createPage($q, modalFormService, apiService, toastService) {
     return {
       perform: perform
     };
@@ -74,25 +83,28 @@
       toastService.add('success', gettext('Page was successfully created.'));
     }
 
-    function onError() {
-      toastService.add('error', gettext('Unable to create the page.'));
+    function onError(err) {
+      if (err && err !== 'escape key press') {
+        toastService.add('error', gettext('Unable to create the page.'));
+      }
+      return $q.reject(err);
     }
 
     function perform() {
-      return getFormSpec(apiService, false)
-              .then(function(formSpec) {
-                var config = {
-                      title: gettext('Create Page'),
-                      schema: formSchema,
-                      form: formSpec,
-                      model: {}
-                };
-                return modalFormService.open(config);
-              })
-              .then(function(ctx) {
-                return apiService.post('/api/docpages/', ctx.model);
-              })
-              .then(onSuccess, onError);
+      return getFormSpec(apiService)
+               .then(function(formSpec) {
+                 var config = {
+                     title: gettext('Create Page'),
+                     schema: formSchema,
+                     form: formSpec,
+                     model: {}
+                 };
+                 return modalFormService.open(config);
+               })
+               .then(function(ctx) {
+                 return apiService.post('/api/docpages/', ctx.model);
+               })
+               .then(onSuccess, onError);
     }
   }
 
@@ -105,26 +117,31 @@
       toastService.add('success', gettext('Page was successfully updated.'));
     }
 
-    function onError() {
-      toastService.add('error', gettext('Unable to update the page.'));
+    function onError(err) {
+      if (err && err !== 'escape key press') {
+        toastService.add('error', gettext('Unable to update the page.'));
+      }
+      return $q.reject(err);
     }
 
     function perform(pageId) {
-      return $q.all([getFormSpec(apiService, true),
-                     apiService.get('/api/docpages/' + pageId + '/')])
-               .then(function(results) {
-                 var config = {
-                       title: gettext('Update Page'),
-                       schema: formSchema,
-                       form: results[0],
-                       model: results[1].data
-                     };
-                 return modalFormService.open(config);
-               })
-               .then(function(ctx) {
-                 return apiService.patch('/api/docpages/' + ctx.model.id + '/', ctx.model);
-               })
-               .then(onSuccess, onError);
+      return apiService.get('/api/docpages/' + pageId + '/')
+                       .then(function(pageData) {
+                         var page = pageData.data;
+                         return getFormSpec(apiService, page.linked_view).then(function(formSpec) {
+                           var config = {
+                             title: gettext('Update Page'),
+                             schema: formSchema,
+                             form: formSpec,
+                             model: page
+                           };
+                           return modalFormService.open(config);
+                         });
+                       })
+                       .then(function(ctx) {
+                         return apiService.patch('/api/docpages/' + ctx.model.id + '/', ctx.model);
+                       })
+                       .then(onSuccess, onError);
     }
   }
 

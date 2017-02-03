@@ -17,6 +17,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from horizon import exceptions
 from horizon import tables
+from horizon import views
 
 from openstack_dashboard.dashboards.admin.docpages import models
 from openstack_dashboard.dashboards.admin.docpages \
@@ -35,3 +36,18 @@ class IndexView(tables.DataTableView):
             exceptions.handle(self.request,
                               _('Unable to retrieve doc pages list.'))
             return []
+
+
+class ViewView(views.HorizonTemplateView):
+    template_name = 'admin/docpages/view.html'
+    page_title = ''
+
+    def get_context_data(self, page_url, **kwargs):
+        context = super(ViewView, self).get_context_data(**kwargs)
+        try:
+            context['page'] = models.DocPage.objects.get(url=page_url)
+        except models.DocPage.DoesNotExist:
+            raise exceptions.NotFound
+        except Exception:
+            exceptions.handle(self.request, _('Unable to view doc page.'))
+        return context

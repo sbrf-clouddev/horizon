@@ -20,4 +20,5 @@ from openstack_dashboard.dashboards.admin.docpages import views
 
 urlpatterns = [
     url(r'^$', views.IndexView.as_view(), name='index'),
+    url(r'^(?P<page_url>[^/]+)/$', views.ViewView.as_view(), name='view'),
 ]
