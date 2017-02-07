@@ -18,7 +18,8 @@
       },
       'linked_view': {
         'title': gettext('Linked to'),
-        'type': 'string'
+        'type': ['null', 'string'],
+        'default': null
       }
     },
     'required': ['url', 'name', 'content']
@@ -41,7 +42,7 @@
                        if (auxUrl) {
                          urls.unshift({value: auxUrl, name: auxUrl});
                        }
-                       urls.unshift({value: '', 'name': gettext('None')});
+                       urls.unshift({'value': null, 'name': gettext('None')});
                        return [
                          {
                            'key': 'url',

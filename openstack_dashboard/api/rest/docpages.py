@@ -29,9 +29,14 @@ class Urls(generic.View):
 
     @rest_utils.ajax()
     def get(self, request):
+        def to_view(url_piece):
+            if url_piece and url_piece[0] == 'horizon':
+                url_piece = url_piece[1:]
+            return '/'.join(url_piece)
+
         from openstack_dashboard import urls as app_urls
         avail_urls = doc_pages.enumerate_table_view_urls(app_urls.urlpatterns)
-        all_views = ['/'.join(url_pieces[1:]) for url_pieces in avail_urls]
+        all_views = (to_view(url_pieces) for url_pieces in avail_urls)
         linked_views = models.DocPage.objects.exclude(linked_view='')
         linked_views = set(linked_views.values_list('linked_view', flat=True))
         return {'items': [v for v in all_views if v not in linked_views]}

@@ -16,9 +16,9 @@
 from django.utils.http import urlquote
 from django.utils.translation import ugettext_lazy as _
 from django.utils.translation import ungettext_lazy
+import six
 
 from horizon import tables
-
 from openstack_dashboard.dashboards.admin.docpages import models
 
 
@@ -76,24 +76,20 @@ class ViewPage(tables.LinkAction):
         return urlquote(datum.url) + "/"
 
 
-class PageFilterAction(tables.FilterAction):
-    def filter(self, table, pages, filter_string):
-        """Really naive case-insensitive search."""
-        q = filter_string.lower()
-
-        def comp(page):
-            return q in page.name.lower()
-
-        return filter(comp, pages)
-
-
 class DocPagesTable(tables.DataTable):
     url = tables.Column('url', verbose_name=_('Page URL'))
     name = tables.Column('name', verbose_name=_('Page Name'))
     linked_view = tables.Column('linked_view', verbose_name=_('Linked to'))
 
+    def get_marker(self):
+        return six.text_type(self._meta.cur_page + 1)
+
+    def get_prev_marker(self):
+        return six.text_type(self._meta.cur_page - 1)
+
     class Meta(object):
         name = "docpages"
         verbose_name = _("Doc Pages")
-        table_actions = (PageFilterAction, CreatePage, DeletePage)
+        table_actions = (tables.NameFilterAction, CreatePage, DeletePage)
         row_actions = (ViewPage, UpdatePage, DeletePage)
+        cur_page = 1
