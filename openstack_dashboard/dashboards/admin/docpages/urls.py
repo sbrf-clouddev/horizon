@@ -15,10 +15,12 @@
 
 from django.conf.urls import url
 
+from horizon.decorators import require_auth as auth
 from openstack_dashboard.dashboards.admin.docpages import views
 
 
 urlpatterns = [
-    url(r'^$', views.IndexView.as_view(), name='index'),
-    url(r'^(?P<page_url>[^/]+)/$', views.ViewView.as_view(), name='view'),
+    url(r'^$', auth(views.IndexView.as_view()), name='index'),
+    url(r'^markdown-help/$', auth(views.HelpView.as_view()), name='help'),
+    url(r'^(?P<page>[^/]+)/$', views.ViewView.as_view(), name='view'),
 ]

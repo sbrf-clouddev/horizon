@@ -1,13 +1,25 @@
-{% extends 'base.html' %}
-{% block title %}{{page.name}}{% endblock %}
+{% extends "base.html" %}
+{% block title %}{{ page.name }}{% endblock %}
 
 {% block content %}
-  <div class='topbar'>
-    {% include "header/_header.html" %}
+  <div class="topbar">
+    <nav class="navbar navbar-default navbar-fixed-top">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          {% include "header/_brand.html" %}
+        </div>
+      </div>
+    </nav>
   </div>
-  <div id='main_content' style='width: 100%;'>
-    <div id='content_body'>
-      <div dockpage-markdown>{{page.content}}</div>
+  <div id="main_content" class="docpage_content">
+    <div id="content_body">
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-md-12">
+            <div docpage-markdown>{{ page.content }}</div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 {% endblock %}

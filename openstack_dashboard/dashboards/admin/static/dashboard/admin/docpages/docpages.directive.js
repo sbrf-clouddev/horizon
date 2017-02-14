@@ -19,7 +19,7 @@
 
   angular
    .module('horizon.dashboard.admin.docpages')
-   .directive('dockpageMarkdown', DocPageMarkdownDirective);
+   .directive('docpageMarkdown', DocPageMarkdownDirective);
 
   DocPageMarkdownDirective.$inject = [
     '$showdown',
@@ -30,8 +30,8 @@
     return {
       restrict: 'AE',
       link: function(scope, elem, attrs) {
-        if (attrs.dockpageMarkdown) {
-          scope.$watch(attrs.dockpageMarkdown, function(newVal) {
+        if (attrs.docpageMarkdown) {
+          scope.$watch(attrs.docpageMarkdown, function(newVal) {
             render(newVal);
           });
         } else {

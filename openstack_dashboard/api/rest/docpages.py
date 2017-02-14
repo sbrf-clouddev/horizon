@@ -17,7 +17,7 @@ from django.forms import models as django_models
 from django.utils import http as utils_http
 from django.views import generic
 
-from horizon.utils import doc_pages
+from horizon.utils.docpages import enumerate_table_view_urls
 from openstack_dashboard.api.rest import urls
 from openstack_dashboard.api.rest import utils as rest_utils
 from openstack_dashboard.dashboards.admin.docpages import models
@@ -35,7 +35,7 @@ class Urls(generic.View):
             return '/'.join(url_piece)
 
         from openstack_dashboard import urls as app_urls
-        avail_urls = doc_pages.enumerate_table_view_urls(app_urls.urlpatterns)
+        avail_urls = enumerate_table_view_urls(app_urls.urlpatterns)
         all_views = (to_view(url_pieces) for url_pieces in avail_urls)
         linked_views = models.DocPage.objects.exclude(linked_view='')
         linked_views = set(linked_views.values_list('linked_view', flat=True))

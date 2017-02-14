@@ -56,7 +56,7 @@ class IndexView(tables.DataTableView):
                 docpages, per_page=utils.get_page_size(request)
             )
             cur_page = clamp(int(marker), 1, paginator.num_pages)
-            self.table._meta.cur_page = cur_page
+            self.table.cur_page = cur_page
             self._more = cur_page < paginator.num_pages
             self._prev = cur_page > 1
             return paginator.page(cur_page)
@@ -71,12 +71,17 @@ class ViewView(views.HorizonTemplateView):
     template_name = 'admin/docpages/view.html'
     page_title = ''
 
-    def get_context_data(self, page_url, **kwargs):
+    def get_context_data(self, page, **kwargs):
         context = super(ViewView, self).get_context_data(**kwargs)
         try:
-            context['page'] = models.DocPage.objects.get(url=page_url)
+            context['page'] = models.DocPage.objects.get(url=page)
         except models.DocPage.DoesNotExist:
             raise exceptions.NotFound
         except Exception:
             exceptions.handle(self.request, _('Unable to view doc page.'))
         return context
+
+
+class HelpView(views.HorizonTemplateView):
+    template_name = 'admin/docpages/syntax.html'
+    page_title = ''

@@ -286,12 +286,18 @@ class Panel(HorizonComponent):
         ``allowed`` runtime checks are also satisfied). If the method returns
         ``False``, then the panel will not be registered and will not be
         available via normal navigation or direct URL access.
+
+    .. attribute:: public
+
+        Boolean value to determine whether this panel can be viewed
+        without being logged in. Defaults to ``False``.
     """
     name = ''
     slug = ''
     urls = None
     nav = True
     index_url_name = "index"
+    public = False
 
     def __repr__(self):
         return "<Panel: %s>" % self.slug
@@ -531,6 +537,14 @@ class Dashboard(Registry, HorizonComponent):
     @property
     def _decorated_urls(self):
         urlpatterns = self._get_default_urlpatterns()
+        urlpatterns_noauth = []
+
+        def add_url(regex, panel):
+            if panel.public:
+                urlpatterns_noauth.append(
+                    url(regex, include(panel._decorated_urls)))
+            else:
+                urlpatterns.append(url(regex, include(panel._decorated_urls)))
 
         default_panel = None
 
@@ -540,17 +554,18 @@ class Dashboard(Registry, HorizonComponent):
                 default_panel = panel
                 continue
             url_slug = panel.slug.replace('.', '/')
-            urlpatterns.append(url(r'^%s/' % url_slug,
-                                   include(panel._decorated_urls)))
+            add_url(r'^%s/' % url_slug, panel)
+
         # Now the default view, which should come last
         if not default_panel:
             raise NotRegistered('The default panel "%s" is not registered.'
                                 % self.default_panel)
-        urlpatterns.append(url(r'', include(default_panel._decorated_urls)))
+        add_url(r'', default_panel)
 
         # Require login if not public.
         if not self.public:
             _decorate_urlconf(urlpatterns, require_auth)
+        urlpatterns += urlpatterns_noauth
         # Apply access controls to all views in the patterns
         permissions = getattr(self, 'permissions', [])
         _decorate_urlconf(urlpatterns, require_perms, permissions)

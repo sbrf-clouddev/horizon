@@ -80,16 +80,16 @@ class DocPagesTable(tables.DataTable):
     url = tables.Column('url', verbose_name=_('Page URL'))
     name = tables.Column('name', verbose_name=_('Page Name'))
     linked_view = tables.Column('linked_view', verbose_name=_('Linked to'))
+    cur_page = 1
 
     def get_marker(self):
-        return six.text_type(self._meta.cur_page + 1)
+        return six.text_type(self.cur_page + 1)
 
     def get_prev_marker(self):
-        return six.text_type(self._meta.cur_page - 1)
+        return six.text_type(self.cur_page - 1)
 
     class Meta(object):
         name = "docpages"
         verbose_name = _("Doc Pages")
         table_actions = (tables.NameFilterAction, CreatePage, DeletePage)
-        row_actions = (ViewPage, UpdatePage, DeletePage)
-        cur_page = 1
+        row_actions = (UpdatePage, ViewPage, DeletePage)

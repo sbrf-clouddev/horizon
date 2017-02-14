@@ -21,3 +21,4 @@ import horizon
 class DocPages(horizon.Panel):
     name = _("Doc Pages")
     slug = 'docpages'
+    public = True

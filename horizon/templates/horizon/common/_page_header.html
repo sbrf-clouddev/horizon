@@ -1,7 +1,16 @@
 {% load i18n %}
 {% block page_header %}
   <div class='page-header'>
-    <h1>{{ title }}</h1>
+    <h1>
+      {{ title }}
+      {% if docpage %}
+        <a class="btn btn-info" target="_blank"
+           href="/admin/docpages/{{ docpage.url|urlencode }}/">
+          <span class="fa fa-lg fa-question-circle" aria-hidden="true"></span>
+          {{ docpage.name }}
+        </a>
+      {% endif %}
+    </h1>
     {% if actions %}
       <form class='actions_column pull-right' action='{{ url }}' method="POST">
         {% csrf_token %}
