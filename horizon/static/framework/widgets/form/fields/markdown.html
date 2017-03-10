@@ -6,16 +6,24 @@
          for="{$::form.key.slice(-1)[0]$}">
     <span>{$::form.title$}</span>
     <span ng-if="form.required" class="hz-icon-required fa fa-asterisk"></span>
-    <button class="btn btn-default btn-xs"
-            data-toggle="button"
-            type="button"
-            sf-field-model="replaceAll"
-            ng-disabled="!$$value$$"
-            ng-click="preview = !preview">
-      <span class="fa fa-eye" aria-hidden="true"></span>
-      <translate>Preview</translate>
-    </button>
   </label>
+  <button class="btn btn-default btn-xs"
+          data-toggle="button"
+          type="button"
+          sf-field-model="replaceAll"
+          ng-disabled="!$$value$$"
+          ng-click="preview = !preview">
+    <span class="fa fa-eye" aria-hidden="true"></span>
+    <translate>Preview</translate>
+  </button>
+  <a class="btn btn-info btn-xs pull-right"
+     aria-disabled="true"
+     target="_blank"
+     ng-href="{$::form.mdHelpUrl$}"
+     ng-if="form.mdHelpUrl">
+    <span class="fa fa-question-circle" aria-hidden="true"></span>
+    <translate>Markdown syntax</translate>
+  </a>
 
   <textarea class="form-control markdown {$::form.fieldHtmlClass$}"
             ng-if="!preview"

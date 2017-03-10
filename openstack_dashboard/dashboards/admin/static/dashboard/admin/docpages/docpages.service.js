@@ -56,7 +56,8 @@
                          },
                          {
                            'key': 'content',
-                           'type': 'markdown'
+                           'type': 'markdown',
+                           'mdHelpUrl': 'markdown-help/'
                          }
                        ];
                      });
