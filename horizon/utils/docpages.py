@@ -17,14 +17,19 @@ from functools import wraps
 
 from django.core.urlresolvers import RegexURLPattern
 from django.core.urlresolvers import RegexURLResolver
+from openstack_auth import user as auth_user
+from openstack_auth import utils
 import openstack_auth.views
 import six
 
 import horizon
+from openstack_dashboard.api import keystone
 from openstack_dashboard.dashboards.admin.docpages import models
 
-DOCPAGE_KEY = 'docpage'
+
 DOCPAGE_ATTR = 'docpageable'
+DOCPAGE_CONTAINER = 'docpages'
+DOCPAGE_KEY = 'docpage'
 LOGIN_VIEW_NAME = 'login'
 
 
@@ -81,6 +86,41 @@ def _deduce_urlname_to_viewfunc(reverse_dict):
                 name_funcs[name] = func
 
     return name_funcs
+
+
+class AdminProjectCtx(object):
+    admin_project = None
+
+    def __init__(self, request):
+        self.request = request
+        self.old_user = request.user
+
+        if not AdminProjectCtx.admin_project:
+            admin_project, _ = keystone.tenant_list(
+                request, filters={'name': 'admin'}
+            )
+            AdminProjectCtx.admin_project = admin_project[0].id
+
+    def __enter__(self):
+        endpoint, _ = utils.fix_auth_url_version_prefix(
+            self.request.user.endpoint
+        )
+        unscoped_token = self.request.user.unscoped_token
+        auth = utils.get_token_auth_plugin(
+            auth_url=endpoint,
+            token=unscoped_token,
+            project_id=AdminProjectCtx.admin_project
+        )
+        auth_ref = auth.get_access(utils.get_session())
+        new_user = auth_user.create_user_from_token(
+            self.request,
+            auth_user.Token(auth_ref, unscoped_token=unscoped_token),
+            endpoint
+        )
+        auth_user.set_session_from_user(self.request, new_user)
+
+    def __exit__(self, _type, value, traceback):
+        auth_user.set_session_from_user(self.request, self.old_user)
 
 
 def enumerate_table_view_urls(root_urls_obj=horizon.urls[0]):

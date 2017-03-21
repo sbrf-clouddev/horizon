@@ -14,13 +14,14 @@
        translate>
     Your browser is outdated! Please, update it to be able to upload files.
   </div>
-  <label class="well drop-zone"
+  <label class="well drop-zone text-center"
          sf-field-model="replaceAll"
          ng-if="::$$value$$.isHTML5"
          uploader="$$value$$"
          nv-file-drop nv-file-over
          over-class="drop-zone-file-over">
-    <div class="text-center" translate>Drop files here or click to select</div>
+    <div translate>Drop files here or click to select</div>
+    <div ng-if="::form.auxMsg" ng-bind="::form.auxMsg"></div>
     <input id="{$::form.key.slice(-1)[0]$}"
            type="file" multiple
            class="hidden"

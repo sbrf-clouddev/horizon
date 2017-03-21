@@ -19,6 +19,8 @@ from django.utils.translation import ungettext_lazy
 import six
 
 from horizon import tables
+from horizon.utils import docpages
+from openstack_dashboard.api import swift
 from openstack_dashboard.dashboards.admin.docpages import models
 
 
@@ -40,7 +42,22 @@ class DeletePage(tables.DeleteAction):
         )
 
     def delete(self, request, obj_id):
-        models.DocPage.objects.filter(pk=obj_id).delete()
+        page = models.DocPage.objects.get(pk=obj_id)
+        page.delete()
+
+        if swift.base.is_service_enabled(request, 'swift'):
+            with docpages.AdminProjectCtx(request):
+                if swift.swift_container_exists(
+                        request, docpages.DOCPAGE_CONTAINER):
+                    files, _ = swift.swift_get_objects(
+                        request,
+                        docpages.DOCPAGE_CONTAINER,
+                        prefix=page.url + swift.FOLDER_DELIMITER,
+                    )
+                    for f in files:
+                        swift.swift_delete_object(
+                            request, docpages.DOCPAGE_CONTAINER, f.name,
+                        )
 
 
 class CreatePage(tables.LinkAction):

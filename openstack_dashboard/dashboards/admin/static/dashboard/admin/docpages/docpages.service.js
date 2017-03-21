@@ -1,6 +1,8 @@
 (function() {
   'use strict';
 
+  var API_ROOT = '/api/docpages/';
+  var PAGE_ROOT = API_ROOT + 'page/';
   var formSchema = {
     'type': 'object',
     'properties': {
@@ -20,6 +22,10 @@
         'title': gettext('Linked to'),
         'type': ['null', 'string'],
         'default': null
+      },
+      'attachments': {
+        'title': gettext('Attachments'),
+        'type': 'object'
       }
     },
     'required': ['url', 'name', 'content']
@@ -27,56 +33,153 @@
 
   angular
     .module('horizon.dashboard.admin.docpages')
+    .service('horizon.dashboard.admin.docpages.utils', utils)
     .service('horizon.dashboard.admin.docpages.create-page.service', createPage)
     .service('horizon.dashboard.admin.docpages.update-page.service', updatePage);
 
-  function getFormSpec(apiService, auxUrl) {
-    return apiService.get('/api/docpages/urls/')
-                     .then(function(data) {
-                       var urls = $.map(data.data.items, function(item) {
-                             return {
-                               value: item,
-                               name: item
-                             };
-                           });
-                       if (auxUrl) {
-                         urls.unshift({value: auxUrl, name: auxUrl});
-                       }
-                       urls.unshift({'value': null, 'name': gettext('None')});
-                       return [
-                         {
-                           'key': 'url',
-                           'readonly': !!auxUrl
-                         },
-                         'name',
-                         {
-                           'key': 'linked_view',
-                           'type': 'select',
-                           'titleMap': urls
-                         },
-                         {
-                           'key': 'content',
-                           'type': 'markdown',
-                           'mdHelpUrl': 'markdown-help/'
-                         }
-                       ];
-                     });
-  }
-
+  utils.$inject = [
+    '$q',
+    '$cookies',
+    'horizon.framework.util.http.service',
+    'horizon.framework.widgets.toast.service',
+    'FileUploader'
+  ];
   createPage.$inject = [
     '$q',
     'horizon.framework.widgets.form.ModalFormService',
     'horizon.framework.util.http.service',
-    'horizon.framework.widgets.toast.service'
+    'horizon.framework.widgets.toast.service',
+    'horizon.dashboard.admin.docpages.utils'
   ];
   updatePage.$inject = [
     '$q',
     'horizon.framework.widgets.form.ModalFormService',
     'horizon.framework.util.http.service',
-    'horizon.framework.widgets.toast.service'
+    'horizon.framework.widgets.toast.service',
+    'horizon.dashboard.admin.docpages.utils'
   ];
 
-  function createPage($q, modalFormService, apiService, toastService) {
+  function utils($q, $cookies, apiService, toastService, FileUploader) {
+    return {
+      createUploader: createUploader,
+      addTotalSizeFilter: addTotalSizeFilter,
+      addPreloadedFile: addPreloadedFile,
+      doUpload: doUpload,
+      getMeta: getMeta
+    };
+
+    function createUploader() {
+      var uploader = new FileUploader({
+        removeAfterUpload: true,
+        headers: {
+          'X-CSRFToken': $cookies.get('csrftoken')
+        }
+      });
+      return uploader;
+    }
+
+    function addTotalSizeFilter(uploader, limit) {
+      uploader.filters.push({
+        name: 'total-size',
+        fn: function(file) {
+          var total = file.size;
+          $.each(uploader.queue, function(_, item) {
+            total += item.file.size;
+          });
+          return total / (1024 * 1024) < limit;
+        }
+      });
+    }
+
+    function addPreloadedFile(uploader, options) {
+      var file = new FileUploader.FileItem(uploader, options);
+      file.progress = 100;
+      file.isUploaded = true;
+      file.isSuccess = true;
+      uploader.queue.push(file);
+    }
+
+    function doUpload(uploader, pageURL) {
+      var result = $q.defer();
+      if (uploader.queue.length === 0) {
+        result.resolve();
+      } else {
+        uploader.onBeforeUploadItem = function(item) {
+          item.url = PAGE_ROOT + pageURL + '/';
+        };
+        uploader.onErrorItem = function(item, resp, status, headers) {
+          // check headers presence to suppress "error" caused by page reload
+          if (!$.isEmptyObject(headers)) {
+            var msg = gettext('Error uploading file %(name)s.');
+            toastService.add('error', interpolate(msg, item.file, true));
+          }
+        };
+        uploader.onCompleteAll = function() {
+          result.resolve();
+        };
+        uploader.uploadAll();
+      }
+
+      return result.promise;
+    }
+
+    function getMeta(isUpdate, auxUrl) {
+      return apiService
+               .get(API_ROOT + 'meta/')
+               .then(function(data) {
+                 var meta = data.data;
+                 var attachLimit = meta.attach_limit;
+                 var auxMsg = interpolate(
+                   gettext('Max sum of file sizes is %s MB'),
+                   [attachLimit]
+                 );
+                 var views = $.map(meta.views, function(item) {
+                   return {value: item, name: item};
+                 });
+                 if (auxUrl) {
+                   views.unshift({value: auxUrl, name: auxUrl});
+                 }
+                 views.unshift({value: null, name: gettext('None')});
+                 return {
+                   spec: [
+                     {
+                       'key': 'url',
+                       'readonly': isUpdate
+                     },
+                     'name',
+                     {
+                       'key': 'linked_view',
+                       'type': 'select',
+                       'titleMap': views
+                     },
+                     {
+                       'key': 'content',
+                       'type': 'markdown',
+                       'mdHelpUrl': 'markdown-help/'
+                     },
+                     {
+                       'key': 'attachments',
+                       'type': 'files',
+                       'auxMsg': auxMsg,
+                       'fileURL': function(model, item) {
+                         var file = item.file.name;
+                         return [meta.container_url, model.url, file].join('/');
+                       },
+                       'onRemoveItem': function(model, item) {
+                         if (!model.hasOwnProperty('removed_attachments')) {
+                           model.removed_attachments = [];
+                         }
+                         model.removed_attachments.push(item.file.name);
+                       }
+                     }
+                   ],
+                   attachLimit: attachLimit
+                 };
+               });
+    }
+  }
+
+  function createPage($q, modalFormService, apiService, toastService, utils) {
     return {
       perform: perform
     };
@@ -93,24 +196,33 @@
     }
 
     function perform() {
-      return getFormSpec(apiService)
-               .then(function(formSpec) {
-                 var config = {
-                     title: gettext('Create Page'),
-                     schema: formSchema,
-                     form: formSpec,
-                     model: {}
-                 };
-                 return modalFormService.open(config);
+      return utils.getMeta(false)
+               .then(function(meta) {
+                 var uploader = utils.createUploader();
+                 utils.addTotalSizeFilter(uploader, meta.attachLimit);
+                 return modalFormService.open({
+                   title: gettext('Create Page'),
+                   schema: formSchema,
+                   form: meta.spec,
+                   model: {
+                     attachments: uploader
+                   }
+                 });
                })
                .then(function(ctx) {
-                 return apiService.post('/api/docpages/', ctx.model);
+                 var model = ctx.model;
+                 var uploader = model.attachments;
+
+                 delete model.attachments;
+                 return apiService
+                          .post(PAGE_ROOT, model)
+                          .then(utils.doUpload(uploader, model.url));
                })
                .then(onSuccess, onError);
     }
   }
 
-  function updatePage($q, modalFormService, apiService, toastService) {
+  function updatePage($q, modalFormService, apiService, toastService, utils) {
     return {
       perform: perform
     };
@@ -127,23 +239,43 @@
     }
 
     function perform(pageId) {
-      return apiService.get('/api/docpages/' + pageId + '/')
-                       .then(function(pageData) {
-                         var page = pageData.data;
-                         return getFormSpec(apiService, page.linked_view).then(function(formSpec) {
-                           var config = {
-                             title: gettext('Update Page'),
-                             schema: formSchema,
-                             form: formSpec,
-                             model: page
-                           };
-                           return modalFormService.open(config);
-                         });
-                       })
-                       .then(function(ctx) {
-                         return apiService.patch('/api/docpages/' + ctx.model.id + '/', ctx.model);
-                       })
-                       .then(onSuccess, onError);
+      return apiService.get(PAGE_ROOT + pageId + '/')
+               .then(function(pageData) {
+                 var page = pageData.data;
+                 var uploader = utils.createUploader();
+
+                 $.each(page.attachments, function(_, item) {
+                   var fileOpts = {
+                     lastModifiedDate: new Date(item.modified),
+                     size: item.size,
+                     type: item.type,
+                     name: item.name
+                   };
+                   utils.addPreloadedFile(uploader, fileOpts);
+                 });
+                 page.attachments = uploader;
+                 return utils
+                          .getMeta(true, page.linked_view)
+                          .then(function(meta) {
+                            utils.addTotalSizeFilter(uploader, meta.attachLimit);
+                            return modalFormService.open({
+                              title: gettext('Update Page'),
+                              schema: formSchema,
+                              form: meta.spec,
+                              model: page
+                            });
+                          });
+               })
+               .then(function(ctx) {
+                 var model = ctx.model;
+                 var uploader = model.attachments;
+
+                 delete model.attachments;
+                 return apiService
+                          .patch(PAGE_ROOT + model.id + '/', model)
+                          .then(utils.doUpload(uploader, model.url));
+               })
+               .then(onSuccess, onError);
     }
   }
 
