@@ -1,0 +1,86 @@
+<div class="form-group has-feedback {$::form.htmlClass$}"
+     sf-field
+     ng-class="{'has-error': form.disableErrorState !== true && hasError(), 'has-success': form.disableSuccessState !== true && hasSuccess()}">
+  <label class="control-label {$::form.labelHtmlClass$}"
+         ng-class="{'sr-only': !showTitle()}"
+         for="{$::form.key.slice(-1)[0]$}">
+    <span>{$::form.title$}</span>
+    <span ng-if="form.required" class="hz-icon-required fa fa-asterisk"></span>
+  </label>
+
+  <div class="alert alert-danger text-center"
+       sf-field-model="replaceAll"
+       ng-if="::!$$value$$.isHTML5"
+       translate>
+    Your browser is outdated! Please, update it to be able to upload files.
+  </div>
+  <label class="well drop-zone"
+         sf-field-model="replaceAll"
+         ng-if="::$$value$$.isHTML5"
+         uploader="$$value$$"
+         nv-file-drop nv-file-over
+         over-class="drop-zone-file-over">
+    <div class="text-center" translate>Drop files here or click to select</div>
+    <input id="{$::form.key.slice(-1)[0]$}"
+           type="file" multiple
+           class="hidden"
+           sf-field-model="uploader"
+           nv-file-select/>
+  </label>
+
+  <table class="table table-bordered"
+         sf-field-model="replaceAll"
+         ng-show="$$value$$.queue.length">
+    <thead>
+      <tr>
+        <td translate>Name</td>
+        <td translate>Size</td>
+        <td translate>Last modified</td>
+        <td translate>Actions</td>
+      </tr>
+    </thead>
+    <tr class="active"
+        sf-field-model="replaceAll"
+        ng-repeat="i in $$value$$.queue | filter:{isUploaded:true}">
+      <td>
+        <a href="{$form.fileURL(model, i)$}"
+           target="_blank"
+           ng-bind="i.file.name"></a>
+      </td>
+      <td ng-bind="i.file.size | bytes"></td>
+      <td ng-bind="i.file.lastModifiedDate"></td>
+      <td>
+        <button class="btn btn-default btn-xs pull-right"
+                type="button"
+                ng-click="form.onRemoveItem && form.onRemoveItem(model, i); i.remove()">
+          <span class="fa fa-trash" aria-hidden="true"></span>
+        </button>
+        <button class="btn btn-default btn-xs pull-right"
+                type="button"
+                clipboard text="form.fileURL(model, i)">
+          <span class="fa fa-clipboard" aria-hidden="true"></span>
+        </button>
+      </td>
+    </tr>
+    <tr sf-field-model="replaceAll"
+        ng-repeat="i in $$value$$.queue | filter:{isUploaded:false}">
+      <td ng-bind="i.file.name"></td>
+      <td ng-bind="i.file.size | bytes"></td>
+      <td ng-bind="i.file.lastModifiedDate"></td>
+      <td>
+        <button class="btn btn-default btn-xs pull-right"
+                type="button"
+                ng-click="i.remove()">
+          <span class="fa fa-trash" aria-hidden="true"></span>
+        </button>
+        <button class="btn btn-default btn-xs pull-right"
+                type="button"
+                clipboard text="form.fileURL(model, i)">
+          <span class="fa fa-clipboard" aria-hidden="true"></span>
+        </button>
+      </td>
+    </tr>
+  </table>
+
+  <span class="help-block" sf-message="form.description"></span>
+</div>

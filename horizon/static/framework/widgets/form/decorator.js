@@ -57,6 +57,10 @@
         template: base + 'markdown.html',
         builder: defaults
       },
+      files: {
+        template: base + 'files.html',
+        builder: defaults
+      },
       fieldset: {
         template: base + 'fieldset.html',
         builder: [sfField, simpleTransclusion, condition]

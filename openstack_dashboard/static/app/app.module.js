@@ -29,6 +29,8 @@
     'schemaForm',
     'smart-table',
     'ng-showdown',
+    'angularFileUpload',
+    'angular-clipboard',
     'ui.bootstrap'
   ];
 
