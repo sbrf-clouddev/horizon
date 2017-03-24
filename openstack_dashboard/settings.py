@@ -458,6 +458,15 @@ if DEBUG:
     logging.basicConfig(level=logging.DEBUG)
 
 
+# Creds for usage by docpages feature
+# DOCPAGES_CREDS = {
+#    'user': 'admin',
+#    'password': 'password',
+#    'auth_url': 'http://<keystone_address>:35357/v3',
+#    'tenant': 'admin',
+# }
+
+
 # Here comes the Django settings deprecation section. Being at the very end
 # of settings.py allows it to catch the settings defined in local_settings.py
 # or inside one of local_settings.d/ snippets.

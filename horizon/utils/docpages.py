@@ -15,10 +15,13 @@
 
 from functools import wraps
 
+from django.conf import settings
 from django.core.urlresolvers import RegexURLPattern
 from django.core.urlresolvers import RegexURLResolver
+from keystoneauth1.identity.generic import Password
+from keystoneauth1.identity.generic import Token
+from keystoneauth1.session import Session
 from openstack_auth import user as auth_user
-from openstack_auth import utils
 import openstack_auth.views
 import six
 
@@ -89,33 +92,35 @@ def _deduce_urlname_to_viewfunc(reverse_dict):
 
 
 class AdminProjectCtx(object):
-    admin_project = None
+    """Admin project context manager.
 
+    It is context manager that sets request's session as if it was initiated
+    by a user specified in the DOCPAGES_CREDS setting.
+    """
     def __init__(self, request):
         self.request = request
         self.old_user = request.user
 
-        if not AdminProjectCtx.admin_project:
-            admin_project, _ = keystone.tenant_list(
-                request, filters={'name': 'admin'}
-            )
-            AdminProjectCtx.admin_project = admin_project[0].id
-
     def __enter__(self):
-        endpoint, _ = utils.fix_auth_url_version_prefix(
-            self.request.user.endpoint
+        auth_url = settings.DOCPAGES_CREDS['auth_url']
+        passwd = Password(
+            auth_url=auth_url,
+            username=settings.DOCPAGES_CREDS['user'],
+            password=settings.DOCPAGES_CREDS['password'],
+            user_domain_id=keystone.DEFAULT_DOMAIN
         )
-        unscoped_token = self.request.user.unscoped_token
-        auth = utils.get_token_auth_plugin(
-            auth_url=endpoint,
-            token=unscoped_token,
-            project_id=AdminProjectCtx.admin_project
+        session = Session(auth=passwd)
+        token = Token(
+            auth_url=auth_url,
+            token=session.get_token(),
+            project_name=settings.DOCPAGES_CREDS['tenant'],
+            project_domain_id=keystone.DEFAULT_DOMAIN,
+            reauthenticate=False
         )
-        auth_ref = auth.get_access(utils.get_session())
         new_user = auth_user.create_user_from_token(
             self.request,
-            auth_user.Token(auth_ref, unscoped_token=unscoped_token),
-            endpoint
+            auth_user.Token(token.get_access(session)),
+            auth_url
         )
         auth_user.set_session_from_user(self.request, new_user)
 
