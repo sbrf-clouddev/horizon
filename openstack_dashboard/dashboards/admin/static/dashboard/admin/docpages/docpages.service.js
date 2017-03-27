@@ -107,12 +107,9 @@
         uploader.onBeforeUploadItem = function(item) {
           item.url = PAGE_ROOT + pageURL + '/';
         };
-        uploader.onErrorItem = function(item, resp, status, headers) {
-          // check headers presence to suppress "error" caused by page reload
-          if (!$.isEmptyObject(headers)) {
-            var msg = gettext('Error uploading file %(name)s.');
-            toastService.add('error', interpolate(msg, item.file, true));
-          }
+        uploader.onErrorItem = function(item) {
+          var msg = gettext('Error uploading file %(name)s.');
+          toastService.add('error', interpolate(msg, item.file, true));
         };
         uploader.onCompleteAll = function() {
           result.resolve();
@@ -129,8 +126,8 @@
                .then(function(data) {
                  var meta = data.data;
                  var attachLimit = meta.attach_limit;
-                 var auxMsg = interpolate(
-                   gettext('Max sum of file sizes is %s MB'),
+                 var dropMsg = interpolate(
+                   gettext('Drop files here or click to select\nMax sum of file sizes is %s MB'),
                    [attachLimit]
                  );
                  var views = $.map(meta.views, function(item) {
@@ -160,16 +157,23 @@
                      {
                        'key': 'attachments',
                        'type': 'files',
-                       'auxMsg': auxMsg,
+                       'dropMsg': dropMsg,
                        'fileURL': function(model, item) {
                          var file = item.file.name;
-                         return [meta.container_url, model.url, file].join('/');
+                         var urlSegments = [
+                           meta.container_url,
+                           encodeURIComponent(model.url),
+                           encodeURIComponent(file)
+                         ];
+                         return urlSegments.join('/');
                        },
                        'onRemoveItem': function(model, item) {
-                         if (!model.hasOwnProperty('removed_attachments')) {
-                           model.removed_attachments = [];
+                         if (item.isUploaded) {
+                           if (!model.hasOwnProperty('removed_attachments')) {
+                             model.removed_attachments = [];
+                           }
+                           model.removed_attachments.push(item.file.name);
                          }
-                         model.removed_attachments.push(item.file.name);
                        }
                      }
                    ],
@@ -216,7 +220,9 @@
                  delete model.attachments;
                  return apiService
                           .post(PAGE_ROOT, model)
-                          .then(utils.doUpload(uploader, model.url));
+                          .then(function() {
+                            return utils.doUpload(uploader, model.url);
+                          });
                })
                .then(onSuccess, onError);
     }
@@ -273,7 +279,9 @@
                  delete model.attachments;
                  return apiService
                           .patch(PAGE_ROOT + model.id + '/', model)
-                          .then(utils.doUpload(uploader, model.url));
+                          .then(function() {
+                            return utils.doUpload(uploader, model.url);
+                          });
                })
                .then(onSuccess, onError);
     }

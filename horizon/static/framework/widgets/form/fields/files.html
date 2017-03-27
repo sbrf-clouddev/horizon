@@ -20,8 +20,7 @@
          uploader="$$value$$"
          nv-file-drop nv-file-over
          over-class="drop-zone-file-over">
-    <div translate>Drop files here or click to select</div>
-    <div ng-if="::form.auxMsg" ng-bind="::form.auxMsg"></div>
+    <div ng-bind="::form.dropMsg"></div>
     <input id="{$::form.key.slice(-1)[0]$}"
            type="file" multiple
            class="hidden"
@@ -53,11 +52,13 @@
       <td>
         <button class="btn btn-default btn-xs pull-right"
                 type="button"
+                title="{$'Delete file'|translate$}"
                 ng-click="form.onRemoveItem && form.onRemoveItem(model, i); i.remove()">
           <span class="fa fa-trash" aria-hidden="true"></span>
         </button>
         <button class="btn btn-default btn-xs pull-right"
                 type="button"
+                title="{$'Put file URL to the Clipboard'|translate$}"
                 clipboard text="form.fileURL(model, i)">
           <span class="fa fa-clipboard" aria-hidden="true"></span>
         </button>
@@ -71,11 +72,13 @@
       <td>
         <button class="btn btn-default btn-xs pull-right"
                 type="button"
-                ng-click="i.remove()">
+                title="{$'Delete file'|translate$}"
+                ng-click="form.onRemoveItem && form.onRemoveItem(model, i); i.remove()">
           <span class="fa fa-trash" aria-hidden="true"></span>
         </button>
         <button class="btn btn-default btn-xs pull-right"
                 type="button"
+                title="{$'Put file URL to the Clipboard'|translate$}"
                 clipboard text="form.fileURL(model, i)">
           <span class="fa fa-clipboard" aria-hidden="true"></span>
         </button>

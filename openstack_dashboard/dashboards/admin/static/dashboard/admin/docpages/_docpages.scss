@@ -11,3 +11,11 @@ textarea.markdown {
 .drop-zone-file-over {
   border: dotted 3px green;
 }
+
+.drop-zone div {
+  white-space: pre;
+}
+
+[docpage-markdown] {
+  padding: 10px 0;
+}
