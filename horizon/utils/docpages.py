@@ -115,12 +115,14 @@ class AdminProjectCtx(object):
             token=session.get_token(),
             project_name=settings.DOCPAGES_CREDS['tenant'],
             project_domain_id=keystone.DEFAULT_DOMAIN,
-            reauthenticate=False
         )
         new_user = auth_user.create_user_from_token(
-            self.request,
-            auth_user.Token(token.get_access(session)),
-            auth_url
+            request=self.request,
+            token=auth_user.Token(token.get_access(session)),
+            endpoint=auth_url,
+            services_region=settings.DOCPAGES_CREDS.get(
+                'docpages-swift-region'
+            )
         )
         auth_user.set_session_from_user(self.request, new_user)
 

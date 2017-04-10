@@ -40,6 +40,7 @@
   utils.$inject = [
     '$q',
     '$cookies',
+    '$window',
     'horizon.framework.util.http.service',
     'horizon.framework.widgets.toast.service',
     'FileUploader'
@@ -59,7 +60,7 @@
     'horizon.dashboard.admin.docpages.utils'
   ];
 
-  function utils($q, $cookies, apiService, toastService, FileUploader) {
+  function utils($q, $cookies, $window, apiService, toastService, FileUploader) {
     return {
       createUploader: createUploader,
       addTotalSizeFilter: addTotalSizeFilter,
@@ -72,7 +73,7 @@
       var uploader = new FileUploader({
         removeAfterUpload: true,
         headers: {
-          'X-CSRFToken': $cookies.get('csrftoken')
+          'X-CSRFToken': $cookies.csrftoken
         }
       });
       return uploader;
@@ -105,7 +106,8 @@
         result.resolve();
       } else {
         uploader.onBeforeUploadItem = function(item) {
-          item.url = PAGE_ROOT + pageURL + '/';
+          var url = $window.WEBROOT + PAGE_ROOT + pageURL + '/';
+          item.url = url.replace(/\/+/g, '/');
         };
         uploader.onErrorItem = function(item) {
           var msg = gettext('Error uploading file %(name)s.');

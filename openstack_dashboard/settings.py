@@ -464,6 +464,7 @@ if DEBUG:
 #    'password': 'password',
 #    'auth_url': 'http://<keystone_address>:35357/v3',
 #    'tenant': 'admin',
+#    'docpages-swift-region': 'KVM'
 # }
 
 
