@@ -13,14 +13,20 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from django.conf import settings
 from django.conf.urls import url
 
 from horizon.decorators import require_auth as auth
+from horizon.decorators import require_perms
 from openstack_dashboard.dashboards.admin.docpages import views
 
 
 urlpatterns = [
-    url(r'^$', auth(views.IndexView.as_view()), name='index'),
+    url(r'^$',
+        require_perms(views.IndexView.as_view(), [
+            settings.DOCPAGES_ROLES_WITH_RW_RIGHTS
+        ]),
+        name='index'),
     url(r'^markdown-help/$', auth(views.HelpView.as_view()), name='help'),
     url(r'^(?P<page>[^/]+)/$', views.ViewView.as_view(), name='view'),
 ]

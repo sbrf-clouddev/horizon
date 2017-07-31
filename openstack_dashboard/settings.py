@@ -467,6 +467,16 @@ if DEBUG:
 #    'docpages-swift-region': 'KVM'
 # }
 
+# DOCPAGES_ROLES_WITH_RW_RIGHTS defines role list for users who should have
+# access to docpages board and possibility to modify docpages. This option
+# should be defined as 'tuple'.
+DOCPAGES_ROLES_WITH_RW_RIGHTS = (
+    'openstack.roles.cloud_admin',
+    'openstack.roles.cloud_admin_ro',
+    'openstack.roles.admin',
+    'openstack.roles.admin_ro',
+)
+
 
 # Here comes the Django settings deprecation section. Being at the very end
 # of settings.py allows it to catch the settings defined in local_settings.py
